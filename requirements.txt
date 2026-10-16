@@ -1,0 +1,16 @@
+# M1 运行依赖（施工单 3.2 指定：fastapi uvicorn sqlalchemy pydantic pytest）
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+sqlalchemy>=2.0.30
+pydantic>=2.7.0
+python-dotenv>=1.0.1
+httpx>=0.27.0
+pytest>=8.0.0
+
+# M4-12：拼音/首字母检索（一物多码的头号成因是找不到就自己新建）。
+# 纯 Python、无 C 扩展；没装也能跑（只是拼音检索失效，见 goods_master._initials）
+pypinyin>=0.51
+
+# M6-2（docs/06 §3.2）：一键导出 Excel。老板随时能把自己的数据拿走 ——
+# 数据是他的，不是我们的。没装也能跑，只是导出端点返回 503。
+openpyxl>=3.1.0

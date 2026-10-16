@@ -1,0 +1,81 @@
+:root {
+  /* M4-8 配色纪律 + **M5 门禁 8 的修正**：状态色只有 红 / 黄 / 绿 + 中性灰。
+     M4 为了"不出现第四种强调色"把 --brand 直接指向 --danger，
+     评审裁定这条**写得过严**：品牌色不参与状态语义，不该被状态色吞掉
+     （docs/05 §0.1 第 2 条）。所以 M5 起 --brand 改回独立的砖红 #c8442b。
+
+     纪律随之改为「红/黄/绿 + **一个**品牌色」：
+     * 状态语义只由 --danger / --warn / --ok 表达，品牌色**不表示任何状态**
+     * 品牌色只用于"这是可以点的 / 这是标题强调"这类**非判断**场合 */
+  --danger: #d92d20;      /* 红：越线/丢钱 */
+  --danger-soft: #fdeceb;
+  --brand: #c8442b;       /* 砖红：品牌强调。**不代表状态**，与 --danger 不同值 */
+  --ink: #1f2329;
+  --ink-2: #646a73;
+  --line: #ebedf0;
+  --bg: #f7f7f8;
+  --ok: #2f9e44;          /* 绿：正常 */
+  --ok-soft: #e7f4ea;
+  --warn: #d97706;        /* 黄：要查（还不确定是不是问题） */
+  --warn-soft: #fdf1e3;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', 'Segoe UI',
+    Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.page {
+  padding-bottom: 76px;
+}
+
+.block {
+  margin: 12px 12px 0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.block-title {
+  font-size: 13px;
+  color: var(--ink-2);
+  margin: 4px 16px 8px;
+  font-weight: 600;
+}
+
+.hint {
+  font-size: 12px;
+  color: var(--ink-2);
+  line-height: 1.6;
+}
+
+.actions {
+  margin: 16px 12px;
+  display: flex;
+  gap: 10px;
+}
+
+.empty {
+  padding: 28px 20px;
+  text-align: center;
+  color: var(--ink-2);
+  font-size: 13px;
+}
+
+.big-num {
+  font-variant-numeric: tabular-nums;
+}

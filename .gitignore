@@ -1,0 +1,32 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+*.egg-info/
+
+# ---- 数据（本地库不入库）----
+data/
+*.db
+*.db-wal
+*.db-shm
+
+# ---- 前端 ----
+web/node_modules/
+web/dist/
+
+# ---- 环境与上传 ----
+.env
+uploads/*
+!uploads/.gitkeep
+
+# ---- 生成物（跑一次就重新生成，不该占仓库历史）----
+# UI 冒烟截图：scripts/ui_smoke.mjs 每次跑都会写一份
+docs/ui-smoke-report-tab.png
+
+# ---- 编辑器/系统 ----
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

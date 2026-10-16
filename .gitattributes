@@ -1,0 +1,13 @@
+# 统一行尾：仓库里一律 LF，避免 Windows 的 CRLF 把 diff 搞得满屏噪音。
+# 对 Python/JS 项目这是通行做法（换行差异不该出现在代码评审里）。
+* text=auto eol=lf
+
+# 明确标记二进制（万一以后有图片/字体入库，不会被当文本改坏）
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary

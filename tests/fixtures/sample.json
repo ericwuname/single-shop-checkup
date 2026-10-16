@@ -1,0 +1,79 @@
+{
+  "_说明": "M1 验收用样例数据（施工单 3.2 tests/fixtures/sample.json）。姓名已脱敏为 员工A/B/C。",
+  "_数据来源": "⚠ 占位数据 —— 结构照着国庆期间的真实排班形状造，但具体数字是合成的。拿到吴涛国庆真实工时后应整体替换（见交付报告『未完成项』）。",
+  "shop": {
+    "name": "喜洋洋（样例）",
+    "category": "catering",
+    "default_hourly_rate": 25.0
+  },
+  "monthly": {
+    "month": "2026-10",
+    "values": {
+      "rent_m": 6000,
+      "utility_m": 1500,
+      "gross_margin": 0.6
+    }
+  },
+  "daily": [
+    {
+      "stat_date": "2026-10-01",
+      "values": {"revenue": 4200, "purchase": 1100, "orders": 140},
+      "shifts": [
+        {"worker_name": "员工A", "start_time": "18:00", "end_time": "22:00"},
+        {"worker_name": "员工B", "start_time": "18:00", "end_time": "22:00"}
+      ]
+    },
+    {
+      "stat_date": "2026-10-02",
+      "values": {"revenue": 3800, "purchase": 900, "orders": 120},
+      "shifts": [
+        {"worker_name": "员工A", "start_time": "17:00", "end_time": "23:00"}
+      ]
+    },
+    {
+      "stat_date": "2026-10-03",
+      "values": {"revenue": 5000, "purchase": 1200, "orders": 160},
+      "shifts": [
+        {"worker_name": "员工C", "start_time": "22:00", "end_time": "06:00"}
+      ]
+    },
+    {
+      "stat_date": "2026-10-04",
+      "values": {"revenue": 0, "purchase": 0, "orders": 0},
+      "shifts": []
+    },
+    {
+      "stat_date": "2026-10-05",
+      "values": {"revenue": 2600, "purchase": 700, "orders": 95},
+      "shifts": [
+        {"worker_name": "员工A", "start_time": "18:00", "end_time": "22:00"}
+      ]
+    },
+    {
+      "stat_date": "2026-10-06",
+      "values": {"revenue": 3300, "purchase": 850, "orders": 110},
+      "shifts": [
+        {"worker_name": "员工A", "start_time": "12:00", "end_time": "20:00"}
+      ]
+    },
+    {
+      "stat_date": "2026-10-07",
+      "values": {"revenue": 4100, "purchase": 1000, "orders": 130},
+      "shifts": [
+        {"worker_name": "员工B", "start_time": "18:00", "end_time": "22:00"}
+      ]
+    }
+  ],
+  "_手工核对结果_Excel口径": {
+    "revenue": 23000,
+    "purchase": 5750,
+    "orders": 755,
+    "hours": 38,
+    "labor_cost": 950,
+    "labor_cost_rate": "950 / 23000 = 4.13%",
+    "food_cost_rate": "5750 / 23000 = 25.00%",
+    "avg_ticket": "23000 / 755 = 30.46",
+    "efficiency": "23000 / 38 = 605.26",
+    "breakeven_daily": "(6000 + 1500 + 950) / 30 / 0.6 = 469.44"
+  }
+}

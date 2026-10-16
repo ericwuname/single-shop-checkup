@@ -1,0 +1,11 @@
+{
+  "name": "单店体检",
+  "short_name": "单店体检",
+  "description": "每天记三个数，看清钱花在哪、哪个环节在漏",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f7f7f8",
+  "theme_color": "#c8442b",
+  "orientation": "portrait",
+  "icons": []
+}
