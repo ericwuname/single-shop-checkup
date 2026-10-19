@@ -1,0 +1,77 @@
+name: android-apk
+
+# M7 WP-6（docs/08 §9.1）：云端打包 APK。手动触发，不占 CI 配额。
+#
+# 前提（三缺一不可，任务书原文）：
+#   1. WP-1 ~ WP-5 验收通过
+#   2. 作者书面说"PWA 不够用，要 APK"
+#   3. 作者同意往仓库加本工作流
+#
+# 用法：
+#   1.仓库 Settings → Secrets and variables → Actions → Variables 标签
+#     新建变量 CAP_SERVER_URL，值 = 服务地址（如 http://192.168.1.6:8000）
+#   2. Actions 页选本工作流 → Run workflow
+#   3. 完成后在本次 run 页面底部 Artifacts 下载 app-debug.apk
+#
+# 版本依据（任务书要求先查官方文档再定，勿凭记忆）：
+#   Capacitor 7 要求 Node >= 20、JDK 21（https://capacitorjs.com/docs/getting-started
+#   与 https://capacitorjs.com/docs/android/configuration）。若 CI 报版本不符，
+#   以官方文档当时的 matrix 为准调整 setup-node/setup-java 版本号。
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: 构建前端
+        working-directory: web
+        run: npm ci && npm run build
+
+      - name: 写入服务地址（远程 URL 模式：改网页不用重新打包）
+        working-directory: web
+        env:
+          CAP_SERVER_URL: ${{ vars.CAP_SERVER_URL }}
+        run: |
+          if [ -z "$CAP_SERVER_URL" ]; then
+            echo "::error::未设置仓库变量 CAP_SERVER_URL（Settings → Variables）。"
+            exit 1
+          fi
+          # capacitor.config.json 里的占位符替换成真实地址
+          node -e "
+            const fs = require('fs');
+            const p = 'capacitor.config.json';
+            const c = JSON.parse(fs.readFileSync(p, 'utf8'));
+            c.server.url = process.env.CAP_SERVER_URL;
+            fs.writeFileSync(p, JSON.stringify(c, null, 2));
+            console.log('server.url =', c.server.url);
+          "
+
+      - name: 生成 Android 工程（每次在 CI 里现生成，不提交 android/ 目录）
+        working-directory: web
+        run: npx --yes @capacitor/cli@latest add android
+
+      - name: 生成启动图标（复用 M7 的图标脚本）
+        run: python scripts/gen_icons.py
+
+      - name: 编译 debug APK
+        working-directory: web/android
+        run: chmod +x gradlew && ./gradlew assembleDebug
+
+      - name: 上传 APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug
+          path: web/android/app/build/outputs/apk/debug/app-debug.apk

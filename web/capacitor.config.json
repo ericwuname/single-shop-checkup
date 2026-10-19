@@ -1,0 +1,9 @@
+{
+  "appId": "com.example.danDianTiJian",
+  "appName": "单店体检",
+  "webDir": "dist",
+  "server": {
+    "url": "__CAP_SERVER_URL__",
+    "cleartext": true
+  }
+}
