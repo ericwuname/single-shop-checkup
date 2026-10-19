@@ -1,4 +1,8 @@
 <template>
+  <!-- 访问码门（M7 WP-1）：只有公网模式后端返回 401 时才出现（docs/08 §4.3）。
+       locked 时主界面整体不渲染 —— 不给"半加载"的假象。 -->
+  <AccessGate v-if="locked" @unlocked="retryBootstrap" />
+  <template v-else>
   <van-nav-bar fixed placeholder :title="title" />
 
   <div class="page">
@@ -133,18 +137,21 @@
     <van-tabbar-item name="report" icon="bar-chart-o">报告</van-tabbar-item>
     <van-tabbar-item name="settings" icon="setting-o">设置</van-tabbar-item>
   </van-tabbar>
+  </template>
 </template>
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import { showToast } from 'vant'
-import { api, monthOf, shiftDay, today } from './api'
+import { api, AccessDenied, monthOf, shiftDay, today } from './api'
+import AccessGate from './components/AccessGate.vue'
 import DailyInput from './components/DailyInput.vue'
 import { enqueueDaily, flushQueue, isNetworkError, pendingCount } from './offline_queue'
 import ShiftTable from './components/ShiftTable.vue'
 import ResultCard from './components/ResultCard.vue'
 
 const tab = ref('input')
+const locked = ref(false) // 公网模式下访问码未通过（M7 WP-1）
 const loading = ref(false)
 const saving = ref(false)
 
@@ -332,10 +339,26 @@ watch(tab, (next) => {
   if (next === 'settings') loadMonthly()
 })
 
+async function retryBootstrap() {
+  // 访问码已由 AccessGate 写入 api 层，重新拉一遍元数据即可。
+  // 再拿到 AccessDenied 说明码还是错的（AccessGate 已清码），留在锁屏页。
+  try {
+    await bootstrap()
+    locked.value = false
+  } catch (err) {
+    if (err instanceof AccessDenied) return
+    showToast(`连不上后端：${err.message}`)
+  }
+}
+
 onMounted(async () => {
   try {
     await bootstrap()
   } catch (err) {
+    if (err instanceof AccessDenied) {
+      locked.value = true
+      return
+    }
     showToast(`连不上后端：${err.message}`)
   }
 

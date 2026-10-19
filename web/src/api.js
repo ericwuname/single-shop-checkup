@@ -3,10 +3,55 @@
 
 const BASE = import.meta.env.VITE_API_BASE || ''
 
+// ---- 访问码（M7 WP-1，docs/08 §4.3）----
+// 公网模式下后端要求每个 /api 请求带 X-Access-Key。
+// 码只存在浏览器 localStorage（无痕模式会抛异常 → 退化为仅内存保存）。
+// 401 = 码错/过期 → 清掉并抛 AccessDenied，让界面回到访问码页；
+// 429 = 暴力防护触发 → 原样提示，不重试。
+let memoryKey = '' // localStorage 不可用时的兜底
+
+function loadKey() {
+  try {
+    return localStorage.getItem('access_key') || memoryKey
+  } catch {
+    return memoryKey
+  }
+}
+
+function saveKey(key) {
+  memoryKey = key || ''
+  try {
+    if (key) localStorage.setItem('access_key', key)
+    else localStorage.removeItem('access_key')
+  } catch {
+    // 无痕模式写不进就算了 —— 内存里还有这份，本次会话仍可用
+  }
+}
+
+export class AccessDenied extends Error {
+  constructor() {
+    super('需要访问码')
+    this.name = 'AccessDenied'
+  }
+}
+
+export function setAccessKey(key) {
+  saveKey((key || '').trim())
+}
+
+export function hasAccessKey() {
+  return loadKey() !== ''
+}
+
 async function request(path, { method = 'GET', body } = {}) {
+  const key = loadKey()
   const res = await fetch(BASE + path, {
     method,
-    headers: body ? { 'Content-Type': 'application/json' } : undefined,
+    headers: {
+      ...(body ? { 'Content-Type': 'application/json' } : {}),
+      // 访问码只走请求头：绝不放进 URL 查询串（会进日志/浏览器历史）
+      ...(key && path.startsWith('/api/') ? { 'X-Access-Key': key } : {}),
+    },
     body: body ? JSON.stringify(body) : undefined,
   })
 
@@ -16,10 +61,20 @@ async function request(path, { method = 'GET', body } = {}) {
   const data = text ? JSON.parse(text) : null
 
   if (!res.ok) {
+    // 401：码缺失或错误。清掉本地码 —— 留着一个错码，下次还是 401，
+    // 用户却看不到输入框（以为已经输过了）。
+    if (res.status === 401 && path.startsWith('/api/')) {
+      saveKey('')
+      throw new AccessDenied()
+    }
     const detail = data && data.detail
     const message = Array.isArray(detail)
       ? detail.map((d) => d.msg).join('；')
       : detail || `请求失败（HTTP ${res.status}）`
+    // 429：暴力防护触发，别重试 —— 越试封得越久
+    if (res.status === 429) {
+      throw new Error(message || '尝试太多次，请 10 分钟后再试')
+    }
     throw new Error(message)
   }
   return data
