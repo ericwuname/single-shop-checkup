@@ -77,7 +77,7 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import { api } from '../api'
+import { api, toISO } from '../api'
 import VerdictChip from '../components/VerdictChip.vue'
 import RangeBar from '../components/RangeBar.vue'
 import WeekBars from '../components/WeekBars.vue'
@@ -125,9 +125,11 @@ const bars = computed(() => {
   const out = []
   const cur = new Date(`${start}T00:00:00`)
   const endD = new Date(`${end}T00:00:00`)
-  const todayIso = new Date().toISOString().slice(0, 10)
+  // ⚠️ 日期一律走本地时区（api.js 的 toISO）。toISOString() 是 UTC，
+    // 在 UTC+8 会把 0–8 点算成昨天 —— M7 自查抓到的阻断 bug（ bars 全空槽）。
+    const todayIso = toISO(new Date())
   while (cur <= endD) {
-    const iso = cur.toISOString().slice(0, 10)
+    const iso = toISO(cur)
     const row = byDate.get(iso)
     const v = row?.values?.revenue
     out.push({
@@ -169,7 +171,7 @@ function m(iso) {
 async function load() {
   if (!props.shop) return
   loaded.value = false
-  const anchor = new Date().toISOString().slice(0, 10)
+  const anchor = toISO(new Date())
   rep.value = await api.weekly(props.shop.id, anchor, 7)
   if (rep.value) {
     dailyRows.value = await api.listDaily(props.shop.id, rep.value.period.start, rep.value.period.end)

@@ -311,6 +311,20 @@ async function main() {
     })`)
     check(week.total && week.avg, 'B2 营业额合计 + 平均每天（=合计÷有数天数）')
     check(week.bars === 7, 'B3 7 根柱（含空槽）', `实际 ${week.bars}`)
+    // M7 自查补的断言：刚存完今天的数，柱子**不许全是空槽**。
+    // 之前 Week.vue 用 toISOString()（UTC）生成日期，UTC+8 下整体偏一天，
+    // listDaily 按日期查不到 → 7 根柱全空，但"合计大数"仍正常显示 ——
+    // 光看文字断言发现不了。柱子必须按本地日期匹配到数据。
+    const barFilled = await client.eval(`(() => {
+      const filled = [...document.querySelectorAll('.bars .bar')].length;
+      const empties = [...document.querySelectorAll('.bars .empty')].length;
+      return { filled, empties };
+    })()`)
+    check(
+      barFilled.filled > 0,
+      'B3b 柱子按本地日期匹配到数据（不许全空槽）',
+      `有值柱 ${barFilled.filled} / 空槽 ${barFilled.empties}`,
+    )
     check(week.rangebar, 'B4 买菜占比区间带渲染（来自后端 benchmark）')
     check(week.dark, 'B5 保本卡出现（有房租/水电/工钱时）')
 

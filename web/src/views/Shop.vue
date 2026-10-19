@@ -133,7 +133,7 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import { showToast, showConfirmDialog } from 'vant'
-import { api } from '../api'
+import { api, toISO } from '../api'
 
 const props = defineProps({
   shop: { type: Object, default: null },
@@ -260,7 +260,7 @@ async function exportData() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `门店数据导出-${new Date().toISOString().slice(0, 10)}.xlsx`
+    a.download = `门店数据导出-${toISO(new Date())}.xlsx`
     document.body.appendChild(a)
     a.click()
     a.remove()
