@@ -736,7 +736,20 @@ class MetricsEngine:
 
     # ---- 辅助：哪些指标算不出、为什么 ------------------------------------ #
     def blocked_reasons(self, values: Mapping[str, float | None]) -> list[dict[str, str]]:
-        """把值为 None 的**比率型**指标翻译成"还缺哪个数"的大白话提示。"""
+        """把值为 None 的**比率型**指标翻译成"还缺哪个数"的大白话提示。
+
+        ## M7 WP-2 / D1（docs/08 §5.1）：内部字段名绝不给老板看
+
+        曾实测出「人力成本率还算不出，缺：labor_cost、营业额」——
+        翻译表只覆盖了 7 个名字，其余回退成 `hints.get(name, name)` 的裸字段名。
+        这违反 M0 硬规矩（对老板不出现术语）。
+
+        三层翻译，**没有一层回退到原始代码**：
+          1. `hints` 显式表（人工措辞最准）
+          2. `field_def.label` / `metric_def.name`（注册表里的中文名）
+          3. `"某项数据"`（最后的兜底）
+        这样将来谁再加指标忘了更新 hints，老板看到的也是中文，不是 `xxx_yyy`。
+        """
         hints = {
             "revenue": "营业额",
             "purchase": "买菜钱",
@@ -745,7 +758,26 @@ class MetricsEngine:
             "labor_m": "月人工（要从排班算）",
             "rent_m": "月房租",
             "utility_m": "月水电",
+            # M7 WP-2 补全（实测泄露的 5 个）
+            "labor_cost": "排班人工（先记今天谁上班）",
+            "labor_m_full": "员工月薪（在「我的店」里填）",
+            "revenue_m_avg": "营业额（要多记几天）",
+            "stock_book_amount": "盘点（还没做盘点）",
+            "stock_variance_amount": "盘点（还没做盘点）",
         }
+
+        def boss_name(name: str) -> str:
+            """一个内部名字 → 老板能看的话（三层，绝不回退裸名）。"""
+            if name in hints:
+                return hints[name]
+            fd = self.field_defs.get(name)
+            if fd and fd.label:
+                return fd.label
+            md = self.metric_defs.get(name)
+            if md and md.name:
+                return md.name
+            return "某项数据"
+
         out: list[dict[str, str]] = []
         for code, value in values.items():
             if value is not None:
@@ -753,11 +785,16 @@ class MetricsEngine:
             md = self.metric_defs.get(code)
             if md is None or md.layer == "atomic":
                 continue
-            missing = [
-                hints.get(name, name)
-                for name in sorted(self._names.get(code, set()))
-                if values.get(name) is None
-            ]
+            # 去重：两个内部名可能翻成同一句话（如 stock_book_amount /
+            # stock_variance_amount 都是"盘点（还没做盘点）"），
+            # 老板不需要看到"缺：盘点、盘点"。
+            missing: list[str] = []
+            for name in sorted(self._names.get(code, set())):
+                if values.get(name) is not None:
+                    continue
+                phrase = boss_name(name)
+                if phrase not in missing:
+                    missing.append(phrase)
             if missing:
                 out.append({"code": code, "missing": "、".join(missing)})
         return out

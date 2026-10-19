@@ -44,6 +44,10 @@ TIERS: dict[str, dict[str, str]] = {
         "period_word": "这几天",
         "default_verdict": "这几个数看着都在正常区间。",
         "default_action": "明天照常记三个数就行，攒够 7 天再看一次汇总。",
+        # M7 WP-2 / D2（docs/08 §5.2）：一个数都没有时不说"看着都在正常区间"——
+        # 那句话只有在**真的比较过**且都正常之后才成立，否则是自相矛盾。
+        # 这是加键，不改区间数值（不违反 F2）。
+        "no_data_verdict": "有了营业额和买菜钱，才能判断高低。",
     },
     TIER_MONTH: {
         "label": "月/季",
@@ -52,6 +56,7 @@ TIERS: dict[str, dict[str, str]] = {
         "period_word": "这段时间",
         "default_verdict": "这段时间这几个数看着都在正常区间。",
         "default_action": "这个月照常记三个数就行，月底再看一次汇总。",
+        "no_data_verdict": "这段时间还没有足够的数，先不判断高低。",
     },
     TIER_YEAR: {
         "label": "年度",
@@ -60,6 +65,7 @@ TIERS: dict[str, dict[str, str]] = {
         "period_word": "这一年",
         "default_verdict": "这一年这几个数看着都在正常区间。",
         "default_action": "明年照常记三个数就行，一年做一次这样的体检。",
+        "no_data_verdict": "这一年还没有足够的数，先不判断高低。",
     },
 }
 

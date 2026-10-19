@@ -588,6 +588,15 @@ def build_conclusion(
                 "把没做到的那几天翻出来看，先找出掉得最多的那天发生了什么。", tier
             )
 
+    # M7 WP-2 / D2：有没有**任何一个**带基准的指标真的比较过？
+    # 只有比较过（verdict 存在）才配说"都在正常区间"；一个都没比过
+    # 却说"看着都在正常区间"，是空数据时的自相矛盾（实测：空店第二行
+    # 是"看着都在正常区间"，而第一行是"还没填任何数"）。
+    has_any_verdict = any(
+        bm.compare(category, code, values.get(code), tier) is not None
+        for code in bm.VERDICT_PRIORITY
+    )
+
     if line2 is None:
         for code in bm.VERDICT_PRIORITY:
             verdict = bm.compare(category, code, values.get(code), tier)
@@ -597,7 +606,11 @@ def build_conclusion(
                 break
 
     if not line2:
-        line2 = tone["default_verdict"]
+        line2 = (
+            tone["no_data_verdict"]
+            if not has_any_verdict
+            else tone["default_verdict"]
+        )
     if not line3:
         line3 = tone["default_action"]
 
@@ -614,9 +627,31 @@ def build_conclusion(
         warnings.append("填了营业额才能算占比。")
     if values.get("hours") is None:
         warnings.append("还没记工时，人工和人效算不出来。")
+    # M7 WP-2 / D2（docs/08 §5.2 第 3 条）：
+    # 缺项提示**只保留 5 个核心指标**（food_cost_rate / labor_cost_rate /
+    # efficiency / avg_ticket / breakeven_daily）。其余指标的缺项不进 warnings
+    # （老板不需要知道"营业额月均值还算不出"这种内部口径），仍留在返回体的
+    # blocked 字段里给 API 调用方用。
+    CORE_MISSING_METRICS = (
+        "food_cost_rate",
+        "labor_cost_rate",
+        "efficiency",
+        "avg_ticket",
+        "breakeven_daily",
+    )
+    extra_missing = 0
     for item in blocked:
+        if item["code"] not in CORE_MISSING_METRICS:
+            extra_missing += 1
+            continue
         name = (md(item["code"]).name if md(item["code"]) else item["code"]) or item["code"]
         warnings.append(f"{name}还算不出，缺：{item['missing']}。")
+    # 总条数 ≤ 4：提示是辅助，堆一屏反而没人看。超出的合并成一句。
+    MAX_WARNINGS = 4
+    if len(warnings) > MAX_WARNINGS:
+        kept = warnings[:MAX_WARNINGS - 1]
+        overflow = len(warnings) - len(kept)
+        warnings = kept + [f"另有 {overflow} 项还算不出，数据多了会自动出现。"]
     # M3-6 防呆：告警走 warnings（老板看得见），不是报错
     for alert in input_alerts:
         warnings.append(alert["message"])
