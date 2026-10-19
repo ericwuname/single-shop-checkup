@@ -1,23 +1,34 @@
-:root {
-  /* M4-8 配色纪律 + **M5 门禁 8 的修正**：状态色只有 红 / 黄 / 绿 + 中性灰。
-     M4 为了"不出现第四种强调色"把 --brand 直接指向 --danger，
-     评审裁定这条**写得过严**：品牌色不参与状态语义，不该被状态色吞掉
-     （docs/05 §0.1 第 2 条）。所以 M5 起 --brand 改回独立的砖红 #c8442b。
+/* M7 设计令牌（docs/08 §6.2）+ 基础样式。
+   颜色来自设计稿 docs/design/m7/png/*.png；判断状态不只靠颜色（配 ↑/✓/↓ 图标与文字）。
 
-     纪律随之改为「红/黄/绿 + **一个**品牌色」：
-     * 状态语义只由 --danger / --warn / --ok 表达，品牌色**不表示任何状态**
-     * 品牌色只用于"这是可以点的 / 这是标题强调"这类**非判断**场合 */
-  --danger: #d92d20;      /* 红：越线/丢钱 */
-  --danger-soft: #fdeceb;
-  --brand: #c8442b;       /* 砖红：品牌强调。**不代表状态**，与 --danger 不同值 */
-  --ink: #1f2329;
-  --ink-2: #646a73;
-  --line: #ebedf0;
-  --bg: #f7f7f8;
-  --ok: #2f9e44;          /* 绿：正常 */
-  --ok-soft: #e7f4ea;
-  --warn: #d97706;        /* 黄：要查（还不确定是不是问题） */
-  --warn-soft: #fdf1e3;
+   与 M4/M5 令牌的关系：M5 门禁 8 的「红/黄/绿 + 一个品牌色」纪律在 M7 设计里
+   演进为「偏高琥珀 / 偏低蓝 / 正常绿」三态胶囊 + 主色 #0E6B58——
+   状态仍只由三态表达，主色不表示任何判断（与原纪律同构）。 */
+:root {
+  --bg: #f2f4f1;            /* 页面底 */
+  --card: #ffffff;          /* 卡片 */
+  --ink: #16201c;           /* 正文 */
+  --muted: #55625c;         /* 次要文字 */
+  --line: #dce2de;          /* 卡片描边 */
+  --line-soft: #e6eae7;     /* 行内分隔线 */
+  --accent: #0e6b58;        /* 主色：按钮 / 选中 / 正常 */
+  --accent-soft: #e1f0eb;   /* 主色浅底 */
+  --accent-ink: #0b4f41;    /* 浅底上的文字 */
+  --accent-mid: #6e9c8d;    /* 柱状图非最高柱 */
+  --warn-bg: #fff0d9;       /* 偏高 */
+  --warn-ink: #8a4300;
+  --low-bg: #e3eef9;        /* 偏低 */
+  --low-ink: #1d4e89;
+  --danger-line: #e3b9a8;   /* 删除类 */
+  --danger-ink: #9b3a12;
+  --pill-off: #c5cec9;      /* 未选中药丸描边 */
+
+  --radius-card: 16px;
+  --radius-btn: 14px;
+
+  /* 系统字体栈（F9：不引外网字体） */
+  font-family: "PingFang SC", "HarmonyOS Sans SC", "Noto Sans SC", "Microsoft YaHei",
+    system-ui, sans-serif;
 }
 
 * {
@@ -27,55 +38,86 @@
 html,
 body,
 #app {
-  height: 100%;
+  min-height: 100%;
 }
 
 body {
   margin: 0;
   background: var(--bg);
   color: var(--ink);
-  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', 'Segoe UI',
-    Roboto, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  font-family: inherit;
   -webkit-font-smoothing: antialiased;
 }
 
-.page {
-  padding-bottom: 76px;
-}
-
-.block {
-  margin: 12px 12px 0;
-  border-radius: 12px;
-  overflow: hidden;
-  background: #fff;
-}
-
-.block-title {
-  font-size: 13px;
-  color: var(--ink-2);
-  margin: 4px 16px 8px;
-  font-weight: 600;
-}
-
-.hint {
-  font-size: 12px;
-  color: var(--ink-2);
-  line-height: 1.6;
-}
-
-.actions {
-  margin: 16px 12px;
-  display: flex;
-  gap: 10px;
-}
-
-.empty {
-  padding: 28px 20px;
-  text-align: center;
-  color: var(--ink-2);
-  font-size: 13px;
-}
-
-.big-num {
+/* 数字统一等宽（对齐、不跳动） */
+.num,
+input.num,
+.big-number {
   font-variant-numeric: tabular-nums;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+input {
+  font-family: inherit;
+}
+
+/* 通用卡片 */
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  padding: 16px;
+  margin: 0 0 12px;
+}
+
+.card-title {
+  font-size: 17px;
+  font-weight: 700;
+  margin: 0 0 4px;
+}
+
+.card-sub {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0 0 12px;
+}
+
+/* 主按钮（56px 高，"存好了"级别） */
+.btn-primary {
+  width: 100%;
+  height: 56px;
+  border: 0;
+  border-radius: var(--radius-btn);
+  background: var(--accent);
+  color: #fff;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.btn-primary:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* 页面容器：给底部导航留出高度 + iOS/安卓安全区 */
+.page-m7 {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 12px 14px calc(92px + env(safe-area-inset-bottom));
+}
+
+/* 视觉隐藏（给屏幕阅读器的标签） */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }

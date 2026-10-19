@@ -51,6 +51,22 @@ WEB_DIST = PROJECT_ROOT / "web" / "dist"
 _TRUTHY = {"1", "true", "True", "yes", "on"}
 
 
+class _SWAwareStatic(StaticFiles):
+    """M7 WP-4（docs/08 §7.5）：`/sw.js` 必须带 `Cache-Control: no-cache`。
+
+    Service Worker 本体如果被浏览器/中间层长期缓存，发新版后手机上的旧 SW
+    会一直挡着新资源 —— 用户永远拿不到更新，而且没有简单的自救办法。
+    静态资源本身文件名带哈希可以长缓存，唯独 sw.js 不行。
+    """
+
+    def file_response(self, *args, **kwargs):  # noqa: D102 - 行为说明见类 docstring
+        response = super().file_response(*args, **kwargs)
+        path = str(getattr(response, "path", ""))
+        if path.endswith("sw.js"):
+            response.headers["Cache-Control"] = "no-cache"
+        return response
+
+
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     # M7 WP-1（docs/08 §4.2）：公网模式配置不合法 → **拒绝启动**。
@@ -185,4 +201,4 @@ def meta_metrics(session: Session = Depends(get_db)) -> list[MetricDef]:
 # 前端静态产物（有就挂，没有不影响 API）
 # --------------------------------------------------------------------------- #
 if WEB_DIST.exists():
-    app.mount("/", StaticFiles(directory=str(WEB_DIST), html=True), name="web")
+    app.mount("/", _SWAwareStatic(directory=str(WEB_DIST), html=True), name="web")
